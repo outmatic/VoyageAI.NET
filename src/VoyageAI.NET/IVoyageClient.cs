@@ -29,6 +29,26 @@ public interface IVoyageClient
     IAsyncEnumerable<EmbeddingResponse> EmbedBatchAsync(IEnumerable<string> inputs, string model, string? inputType = null, int batchSize = 128, int maxConcurrency = 8, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Creates contextualized chunk embeddings, where each chunk is embedded with
+    /// awareness of the other chunks in the same document.
+    /// </summary>
+    Task<ContextualizedEmbeddingResponse> EmbedContextualizedAsync(ContextualizedEmbeddingRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates contextualized chunk embeddings for the given documents, where each inner
+    /// sequence holds the chunks of one document.
+    /// </summary>
+    Task<ContextualizedEmbeddingResponse> EmbedContextualizedAsync(IEnumerable<IEnumerable<string>> inputs, string model, string? inputType = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates contextualized chunk embeddings for a large number of documents, automatically
+    /// batching and parallelizing requests. Results are streamed as each batch completes,
+    /// preserving input order. Batching is per document; chunks of a document always stay
+    /// in the same request.
+    /// </summary>
+    IAsyncEnumerable<ContextualizedEmbeddingResponse> EmbedContextualizedBatchAsync(IEnumerable<IEnumerable<string>> inputs, string model, string? inputType = null, int batchSize = 128, int maxConcurrency = 8, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Creates embeddings for multimodal input(s) containing text and/or images.
     /// </summary>
     Task<MultimodalEmbeddingResponse> EmbedMultimodalAsync(MultimodalEmbeddingRequest request, CancellationToken cancellationToken = default);

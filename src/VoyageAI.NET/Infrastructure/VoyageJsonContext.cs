@@ -6,6 +6,8 @@ namespace VoyageAI;
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
 [JsonSerializable(typeof(EmbeddingRequest))]
 [JsonSerializable(typeof(EmbeddingResponse))]
+[JsonSerializable(typeof(ContextualizedEmbeddingRequest))]
+[JsonSerializable(typeof(ContextualizedEmbeddingResponse))]
 [JsonSerializable(typeof(MultimodalEmbeddingRequest))]
 [JsonSerializable(typeof(MultimodalEmbeddingResponse))]
 [JsonSerializable(typeof(RerankRequest))]

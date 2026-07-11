@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using VoyageAI.Models;
@@ -44,5 +45,25 @@ public sealed partial class VoyageClient : IVoyageClient
         }
 
         return (await response.Content.ReadFromJsonAsync(responseInfo, cancellationToken))!;
+    }
+
+    private static async IAsyncEnumerable<TResponse> BatchAsync<TItem, TResponse>(
+        IEnumerable<TItem> inputs,
+        int batchSize,
+        int maxConcurrency,
+        Func<TItem[], CancellationToken, Task<TResponse>> send,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        foreach (var window in inputs.Chunk(batchSize).Chunk(maxConcurrency))
+        {
+            var tasks = window.Select(batch => send(batch, cancellationToken)).ToList();
+
+            var results = await Task.WhenAll(tasks);
+
+            foreach (var result in results)
+            {
+                yield return result;
+            }
+        }
     }
 }

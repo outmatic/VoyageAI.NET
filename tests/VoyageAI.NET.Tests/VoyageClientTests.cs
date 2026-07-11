@@ -74,6 +74,102 @@ public sealed class VoyageClientTests
     }
 
     [Fact]
+    public async Task EmbedContextualizedAsync_SendsCorrectRequest_And_DeserializesResponse()
+    {
+        var (client, handler) = CreateClient();
+
+        var responseBody = new
+        {
+            @object = "list",
+            data = new[]
+            {
+                new
+                {
+                    @object = "list",
+                    data = new[] { new { @object = "embedding", embedding = new[] { 0.1, 0.2 }, index = 0 } },
+                    index = 0
+                }
+            },
+            model = "voyage-context-4",
+            usage = new { total_tokens = 12 }
+        };
+        handler.SetResponse(HttpStatusCode.OK, responseBody);
+
+        var result = await client.EmbedContextualizedAsync(new ContextualizedEmbeddingRequest
+        {
+            Inputs = [["chunk 1", "chunk 2"]],
+            Model = VoyageModels.VoyageContext4,
+            InputType = InputType.Document
+        }, TestContext.Current.CancellationToken);
+
+        Assert.Single(result.Data);
+        Assert.Equal([0.1f, 0.2f], result.Data[0].Data[0].Embedding);
+        Assert.Equal(12, result.Usage.TotalTokens);
+
+        Assert.Equal(HttpMethod.Post, handler.LastRequest!.Method);
+        Assert.Equal("https://api.voyageai.com/v1/contextualizedembeddings", handler.LastRequest.RequestUri!.ToString());
+    }
+
+    [Fact]
+    public async Task EmbedContextualizedAsync_ConvenienceOverload_Works()
+    {
+        var (client, handler) = CreateClient();
+
+        var responseBody = new
+        {
+            @object = "list",
+            data = new[]
+            {
+                new
+                {
+                    @object = "list",
+                    data = new[] { new { @object = "embedding", embedding = new[] { 0.5 }, index = 0 } },
+                    index = 0
+                }
+            },
+            model = "voyage-context-4",
+            usage = new { total_tokens = 4 }
+        };
+        handler.SetResponse(HttpStatusCode.OK, responseBody);
+
+        var result = await client.EmbedContextualizedAsync(
+            [["doc1 chunk1", "doc1 chunk2"]],
+            VoyageModels.VoyageContext4,
+            InputType.Document,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal([0.5f], result.Data[0].Data[0].Embedding);
+        Assert.Equal(HttpMethod.Post, handler.LastRequest!.Method);
+    }
+
+    [Fact]
+    public async Task EmbedContextualizedBatchAsync_SplitsIntoBatches()
+    {
+        var (client, handler) = CreateClient();
+
+        var responseBody = new
+        {
+            @object = "list",
+            data = Array.Empty<object>(),
+            model = "voyage-context-4",
+            usage = new { total_tokens = 1 }
+        };
+        handler.SetResponse(HttpStatusCode.OK, responseBody);
+
+        // 5 documents with batchSize=2 → 3 batches
+        var inputs = Enumerable.Range(0, 5).Select(i => new List<string> { $"doc-{i} chunk-a", $"doc-{i} chunk-b" });
+        var responses = new List<ContextualizedEmbeddingResponse>();
+
+        await foreach (var response in client.EmbedContextualizedBatchAsync(inputs, VoyageModels.VoyageContext4, InputType.Document, batchSize: 2, maxConcurrency: 2, cancellationToken: TestContext.Current.CancellationToken))
+        {
+            responses.Add(response);
+        }
+
+        Assert.Equal(3, responses.Count);
+        Assert.Equal(3, handler.CallCount);
+    }
+
+    [Fact]
     public async Task RerankAsync_SendsCorrectRequest()
     {
         var (client, handler) = CreateClient();

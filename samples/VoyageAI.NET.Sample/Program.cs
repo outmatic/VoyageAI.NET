@@ -17,6 +17,7 @@ var demos = new (string Name, Func<IVoyageClient, Task> Run)[]
 {
     ("Text Embeddings", TextEmbeddingsDemo.RunAsync),
     ("Batch Embeddings", BatchEmbeddingsDemo.RunAsync),
+    ("Contextualized Embeddings", ContextualizedEmbeddingsDemo.RunAsync),
     ("Reranking", RerankingDemo.RunAsync),
 };
 

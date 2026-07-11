@@ -28,6 +28,14 @@ public static class VoyageModels
     /// <summary>voyage-code-2</summary>
     public const string VoyageCode2 = "voyage-code-2";
 
+    // ── Contextualized embedding models ──
+
+    /// <summary>voyage-context-4</summary>
+    public const string VoyageContext4 = "voyage-context-4";
+
+    /// <summary>voyage-context-3</summary>
+    public const string VoyageContext3 = "voyage-context-3";
+
     // ── Multimodal embedding models ──
 
     /// <summary>voyage-multimodal-3.5</summary>

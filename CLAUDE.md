@@ -1,6 +1,6 @@
 # VoyageAI.NET
 
-.NET client library for the [Voyage.ai](https://voyageai.com) API — embeddings, multimodal embeddings, and reranking.
+.NET client library for the [Voyage.ai](https://voyageai.com) API — embeddings, contextualized chunk embeddings, multimodal embeddings, and reranking.
 
 ## Project Structure
 
@@ -10,6 +10,7 @@ VoyageAI.NET.sln
 │   ├── Client/                          → VoyageClient partial class files
 │   │   ├── VoyageClient.cs              → Core (constructor, PostAsync)
 │   │   ├── VoyageClient.Embeddings.cs   → EmbedAsync, EmbedBatchAsync
+│   │   ├── VoyageClient.Contextualized.cs → EmbedContextualizedAsync, EmbedContextualizedBatchAsync
 │   │   ├── VoyageClient.Multimodal.cs   → EmbedMultimodalAsync, EmbedMultimodalBatchAsync
 │   │   └── VoyageClient.Rerank.cs       → RerankAsync
 │   ├── Models/                          → Request/response record DTOs
@@ -40,6 +41,8 @@ Auth: Bearer token via `Authorization` header
 |---------------------------|-----------------------------|---------------------------------|
 | `/embeddings`             | `EmbedAsync`                | Text embeddings                 |
 | `/embeddings`             | `EmbedBatchAsync`           | Batched text embeddings         |
+| `/contextualizedembeddings` | `EmbedContextualizedAsync` | Contextualized chunk embeddings |
+| `/contextualizedembeddings` | `EmbedContextualizedBatchAsync` | Batched contextualized embeddings |
 | `/multimodalembeddings`   | `EmbedMultimodalAsync`      | Text + image embeddings         |
 | `/multimodalembeddings`   | `EmbedMultimodalBatchAsync` | Batched multimodal embeddings   |
 | `/rerank`                 | `RerankAsync`               | Document reranking              |

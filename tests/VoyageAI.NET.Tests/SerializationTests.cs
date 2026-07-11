@@ -163,6 +163,105 @@ public sealed class SerializationTests
     }
 
     [Fact]
+    public void ContextualizedEmbeddingRequest_Serializes_Correctly()
+    {
+        var request = new ContextualizedEmbeddingRequest
+        {
+            Inputs = [["chunk 1", "chunk 2"], ["chunk 3"]],
+            Model = VoyageModels.VoyageContext4,
+            InputType = InputType.Document,
+            OutputDimension = 1024,
+            OutputDtype = "float",
+            EncodingFormat = "base64",
+            EnableAutoChunking = true,
+            ChunkSize = 512,
+            ChunkOverlap = 64
+        };
+
+        var json = JsonSerializer.Serialize(request, VoyageJsonContext.Default.ContextualizedEmbeddingRequest);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        var inputs = root.GetProperty("inputs");
+        Assert.Equal(2, inputs.GetArrayLength());
+        Assert.Equal(2, inputs[0].GetArrayLength());
+        Assert.Equal("chunk 1", inputs[0][0].GetString());
+        Assert.Equal("chunk 3", inputs[1][0].GetString());
+        Assert.Equal("voyage-context-4", root.GetProperty("model").GetString());
+        Assert.Equal("document", root.GetProperty("input_type").GetString());
+        Assert.Equal(1024, root.GetProperty("output_dimension").GetInt32());
+        Assert.Equal("float", root.GetProperty("output_dtype").GetString());
+        Assert.Equal("base64", root.GetProperty("encoding_format").GetString());
+        Assert.True(root.GetProperty("enable_auto_chunking").GetBoolean());
+        Assert.Equal(512, root.GetProperty("chunk_size").GetInt32());
+        Assert.Equal(64, root.GetProperty("chunk_overlap").GetInt32());
+    }
+
+    [Fact]
+    public void ContextualizedEmbeddingRequest_NullableFields_OmittedWhenNull()
+    {
+        var request = new ContextualizedEmbeddingRequest
+        {
+            Inputs = [["chunk"]],
+            Model = VoyageModels.VoyageContext4
+        };
+
+        var json = JsonSerializer.Serialize(request, VoyageJsonContext.Default.ContextualizedEmbeddingRequest);
+
+        Assert.DoesNotContain("input_type", json);
+        Assert.DoesNotContain("output_dimension", json);
+        Assert.DoesNotContain("output_dtype", json);
+        Assert.DoesNotContain("encoding_format", json);
+        Assert.DoesNotContain("enable_auto_chunking", json);
+        Assert.DoesNotContain("chunk_size", json);
+        Assert.DoesNotContain("chunk_overlap", json);
+    }
+
+    [Fact]
+    public void ContextualizedEmbeddingResponse_Deserializes()
+    {
+        const string json = """
+        {
+            "object": "list",
+            "data": [
+                {
+                    "object": "list",
+                    "data": [
+                        { "object": "embedding", "embedding": [0.1, 0.2], "index": 0, "text": "chunk 1" },
+                        { "object": "embedding", "embedding": [0.3, 0.4], "index": 1, "text": "chunk 2" }
+                    ],
+                    "index": 0
+                },
+                {
+                    "object": "list",
+                    "data": [
+                        { "object": "embedding", "embedding": [0.5, 0.6], "index": 0 }
+                    ],
+                    "index": 1
+                }
+            ],
+            "model": "voyage-context-4",
+            "usage": { "total_tokens": 30 },
+            "chunker_version": "1.0.0"
+        }
+        """;
+
+        var response = JsonSerializer.Deserialize(json, VoyageJsonContext.Default.ContextualizedEmbeddingResponse)!;
+
+        Assert.Equal(2, response.Data.Count);
+        Assert.Equal(0, response.Data[0].Index);
+        Assert.Equal(2, response.Data[0].Data.Count);
+        Assert.Equal([0.1f, 0.2f], response.Data[0].Data[0].Embedding);
+        Assert.Equal((string?)"chunk 1", (string?)response.Data[0].Data[0].Text);
+        Assert.Equal(1, response.Data[0].Data[1].Index);
+        Assert.Equal(1, response.Data[1].Index);
+        Assert.Null(response.Data[1].Data[0].Text);
+        Assert.Equal((string?)"voyage-context-4", (string?)response.Model);
+        Assert.Equal(30, response.Usage.TotalTokens);
+        Assert.Equal((string?)"1.0.0", (string?)response.ChunkerVersion);
+    }
+
+    [Fact]
     public void VoyageApiError_Deserializes()
     {
         const string json = """{"detail":"bad request"}""";

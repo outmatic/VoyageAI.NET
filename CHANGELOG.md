@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+- Contextualized chunk embeddings (`EmbedContextualizedAsync`, `EmbedContextualizedBatchAsync`) via `/contextualizedembeddings`
+- Server-side auto-chunking support (`EnableAutoChunking`, `ChunkSize`, `ChunkOverlap`)
+- New model constants: `VoyageModels.VoyageContext4`, `VoyageModels.VoyageContext3`
+
 ## 1.0.0
 
 Initial release.

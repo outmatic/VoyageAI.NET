@@ -2,7 +2,7 @@
 
 **Typed .NET client for the [Voyage AI](https://voyageai.com) API**
 
-Text embeddings, multimodal embeddings, and reranking. Source-generated JSON, auto-batching, and built-in resilience — zero configuration.
+Text embeddings, contextualized chunk embeddings, multimodal embeddings, and reranking. Source-generated JSON, auto-batching, and built-in resilience — zero configuration.
 
 [![NuGet](https://img.shields.io/nuget/v/VoyageAI.NET?style=flat-square&color=004880)](https://www.nuget.org/packages/VoyageAI.NET)
 [![Downloads](https://img.shields.io/nuget/dt/VoyageAI.NET?style=flat-square&color=004880)](https://www.nuget.org/packages/VoyageAI.NET)
@@ -102,6 +102,45 @@ await foreach (var r in client.EmbedBatchAsync(
 }
 ```
 
+## Contextualized Embeddings
+
+Embed document chunks with awareness of their sibling chunks ([contextualized chunk embeddings](https://docs.voyageai.com/docs/contextualized-chunk-embeddings)). Each inner list holds the chunks of one document.
+
+```csharp
+// Simple — one list of chunks per document
+var r = await client.EmbedContextualizedAsync(
+    [
+        ["doc1 chunk1", "doc1 chunk2"],
+        ["doc2 chunk1"]
+    ],
+    VoyageModels.VoyageContext4,
+    InputType.Document);
+
+// Full control — including server-side auto-chunking
+var r = await client.EmbedContextualizedAsync(new ContextualizedEmbeddingRequest
+{
+    Inputs = [["full document text"]],      // one string per document with auto-chunking
+    Model = VoyageModels.VoyageContext4,    // required
+    InputType = InputType.Document,         // required for auto-chunking
+    EnableAutoChunking = true,              // let the server chunk each document
+    ChunkSize = 512,                        // tokens per chunk (default: 512)
+    ChunkOverlap = 0,                       // token overlap between chunks (default: 0)
+    OutputDimension = 1024                  // 256, 512, 1024, 2048 (optional)
+});
+
+// r.Data[0].Index               → int (document position)
+// r.Data[0].Data[0].Embedding   → float[] (per-chunk vector)
+// r.Data[0].Data[0].Text        → string? (chunk text, when auto-chunked)
+// r.Usage.TotalTokens           → int
+
+// Batch — batching is per document; a document's chunks stay in one request
+await foreach (var r in client.EmbedContextualizedBatchAsync(
+    documents, VoyageModels.VoyageContext4, InputType.Document))
+{
+    // process
+}
+```
+
 ## Multimodal Embeddings
 
 ```csharp
@@ -184,6 +223,13 @@ Use `VoyageModels.*` constants — no magic strings.
 | `VoyageModels.VoyageLaw2` | `voyage-law-2` |
 | `VoyageModels.VoyageCode2` | `voyage-code-2` |
 
+### Contextualized
+
+| Constant | API id |
+| --- | --- |
+| `VoyageModels.VoyageContext4` | `voyage-context-4` |
+| `VoyageModels.VoyageContext3` | `voyage-context-3` |
+
 ### Multimodal
 
 | Constant | API id |
@@ -242,7 +288,7 @@ builder.Services.AddVoyageClient(options =>
 
 ```
 src/VoyageAI.NET/
-  Client/           VoyageClient partials (core, Embeddings, Multimodal, Rerank)
+  Client/           VoyageClient partials (core, Embeddings, Contextualized, Multimodal, Rerank)
   Models/           Request/response records (immutable, `required init`)
   Extensions/       AddVoyageClient DI extension
   Constants/        VoyageModels, InputType

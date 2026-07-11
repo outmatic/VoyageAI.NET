@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using VoyageAI.Models;
 
 namespace VoyageAI;
@@ -21,28 +20,14 @@ public sealed partial class VoyageClient
         => EmbedAsync(new EmbeddingRequest { Input = input.ToList(), Model = model, InputType = inputType }, cancellationToken);
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<EmbeddingResponse> EmbedBatchAsync(
+    public IAsyncEnumerable<EmbeddingResponse> EmbedBatchAsync(
         IEnumerable<string> inputs,
         string model,
         string? inputType = null,
         int batchSize = 128,
         int maxConcurrency = 8,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        foreach (var window in inputs.Chunk(batchSize).Chunk(maxConcurrency))
-        {
-            var tasks = window
-                .Select(batch => EmbedAsync(
-                    new EmbeddingRequest { Input = batch.ToList(), Model = model, InputType = inputType },
-                    cancellationToken))
-                .ToList();
-
-            var results = await Task.WhenAll(tasks);
-
-            foreach (var result in results)
-            {
-                yield return result;
-            }
-        }
-    }
+        CancellationToken cancellationToken = default)
+        => BatchAsync(inputs, batchSize, maxConcurrency,
+            (batch, ct) => EmbedAsync(batch, model, inputType, ct),
+            cancellationToken);
 }
