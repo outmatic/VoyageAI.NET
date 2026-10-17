@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Update SourceLink to 10.0.111 to fix the vulnerable transitive `Microsoft.Build.Tasks.Git` dependency (CVE-2026-62900)
+
 ## 1.1.0
 
 - Contextualized chunk embeddings (`EmbedContextualizedAsync`, `EmbedContextualizedBatchAsync`) via `/contextualizedembeddings`
