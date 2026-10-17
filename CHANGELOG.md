@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0
 
 - New model constants: `VoyageModels.VoyageCode4`, `VoyageModels.Rerank3`, and `VoyageModels.Rerank3Lite`; earlier constants remain available
 - Multimodal video content via `VideoUrlContentPart` and `VideoBase64ContentPart`, video pixel usage, output dimensions, and output data types

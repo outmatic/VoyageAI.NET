@@ -6,12 +6,13 @@
     <IsAotCompatible>true</IsAotCompatible>
     <IsTrimmable>true</IsTrimmable>
     <PackageId>VoyageAI.NET</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Description>A .NET client library for the Voyage.ai API — embeddings, contextualized chunk embeddings, multimodal embeddings, and reranking.</Description>
     <Authors>Outmatic</Authors>
     <PackageTags>voyage;ai;embeddings;rerank;vector;search</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>New Voyage models, multimodal video inputs, and client reliability improvements. Full changelog: https://github.com/outmatic/VoyageAI.NET/blob/v1.2.0/CHANGELOG.md</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/outmatic/VoyageAI.NET</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
