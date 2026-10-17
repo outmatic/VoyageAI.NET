@@ -17,7 +17,7 @@ public static class RerankingDemo
         var response = await client.RerankAsync(
             "When is Apple's conference call scheduled?",
             documents,
-            VoyageModels.Rerank25,
+            VoyageModels.Rerank3,
             topK: 3);
 
         foreach (var result in response.Data)

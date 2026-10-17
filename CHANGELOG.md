@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- New model constants: `VoyageModels.VoyageCode4`, `VoyageModels.Rerank3`, and `VoyageModels.Rerank3Lite`; earlier constants remain available
+- Multimodal video content via `VideoUrlContentPart` and `VideoBase64ContentPart`, video pixel usage, output dimensions, and output data types
 - Update SourceLink to 10.0.111 to fix the vulnerable transitive `Microsoft.Build.Tasks.Git` dependency (CVE-2026-62900)
 
 ## 1.1.0

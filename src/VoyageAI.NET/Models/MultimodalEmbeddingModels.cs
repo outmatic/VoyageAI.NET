@@ -30,6 +30,19 @@ public sealed record MultimodalEmbeddingRequest
     public bool? Truncation { get; init; }
 
     /// <summary>
+    /// Desired output embedding dimension for models that support it, such as voyage-multimodal-3.5.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? OutputDimension { get; init; }
+
+    /// <summary>
+    /// Output data type for models that support it: <c>"float"</c>, <c>"int8"</c>,
+    /// <c>"uint8"</c>, <c>"binary"</c>, or <c>"ubinary"</c>.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? OutputDtype { get; init; }
+
+    /// <summary>
     /// Encoding format for the response: <c>null</c> (default JSON arrays) or <c>"base64"</c>.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -42,7 +55,7 @@ public sealed record MultimodalEmbeddingRequest
 public sealed record MultimodalInput
 {
     /// <summary>
-    /// The content parts (text, image URL, or base64 image).
+    /// The content parts (text, images, or videos). Video requires voyage-multimodal-3.5.
     /// </summary>
     public required List<ContentPart> Content { get; init; }
 }
@@ -53,6 +66,8 @@ public sealed record MultimodalInput
 [JsonDerivedType(typeof(TextContentPart))]
 [JsonDerivedType(typeof(ImageUrlContentPart))]
 [JsonDerivedType(typeof(ImageBase64ContentPart))]
+[JsonDerivedType(typeof(VideoUrlContentPart))]
+[JsonDerivedType(typeof(VideoBase64ContentPart))]
 public abstract record ContentPart
 {
     /// <summary>
@@ -98,9 +113,37 @@ public sealed record ImageBase64ContentPart : ContentPart
     public override string Type => "image_base64";
 
     /// <summary>
-    /// The base64-encoded image data.
+    /// The base64-encoded image in data URL format, e.g. <c>data:image/png;base64,...</c>.
     /// </summary>
     public required string ImageBase64 { get; init; }
+}
+
+/// <summary>
+/// An MP4 video referenced by URL. Supported by voyage-multimodal-3.5.
+/// </summary>
+public sealed record VideoUrlContentPart : ContentPart
+{
+    /// <inheritdoc />
+    public override string Type => "video_url";
+
+    /// <summary>
+    /// The video URL.
+    /// </summary>
+    public required string VideoUrl { get; init; }
+}
+
+/// <summary>
+/// An MP4 video encoded as base64. Supported by voyage-multimodal-3.5.
+/// </summary>
+public sealed record VideoBase64ContentPart : ContentPart
+{
+    /// <inheritdoc />
+    public override string Type => "video_base64";
+
+    /// <summary>
+    /// The base64-encoded video in data URL format: <c>data:video/mp4;base64,...</c>.
+    /// </summary>
+    public required string VideoBase64 { get; init; }
 }
 
 /// <summary>
@@ -143,6 +186,11 @@ public sealed record MultimodalUsage
     /// Number of image pixels processed.
     /// </summary>
     public required int ImagePixels { get; init; }
+
+    /// <summary>
+    /// Number of video pixels processed, or zero when the API omits video usage.
+    /// </summary>
+    public long VideoPixels { get; init; }
 
     /// <summary>
     /// Total number of tokens consumed.

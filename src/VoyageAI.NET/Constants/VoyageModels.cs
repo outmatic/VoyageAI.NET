@@ -16,6 +16,9 @@ public static class VoyageModels
     /// <summary>voyage-4-lite</summary>
     public const string Voyage4Lite = "voyage-4-lite";
 
+    /// <summary>voyage-code-4 — optimized for code retrieval and coding agents.</summary>
+    public const string VoyageCode4 = "voyage-code-4";
+
     /// <summary>voyage-code-3</summary>
     public const string VoyageCode3 = "voyage-code-3";
 
@@ -42,6 +45,12 @@ public static class VoyageModels
     public const string VoyageMultimodal35 = "voyage-multimodal-3.5";
 
     // ── Rerank models ──
+
+    /// <summary>rerank-3 — highest retrieval accuracy.</summary>
+    public const string Rerank3 = "rerank-3";
+
+    /// <summary>rerank-3-lite — optimized for latency and cost.</summary>
+    public const string Rerank3Lite = "rerank-3-lite";
 
     /// <summary>rerank-2.5</summary>
     public const string Rerank25 = "rerank-2.5";

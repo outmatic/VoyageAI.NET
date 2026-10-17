@@ -5,7 +5,7 @@ using VoyageAI.Sample.Demos;
 var apiKey = Environment.GetEnvironmentVariable("VOYAGE_API_KEY")
              ?? throw new InvalidOperationException("Set the VOYAGE_API_KEY environment variable.");
 
-var httpClient = new HttpClient
+using var httpClient = new HttpClient
 {
     BaseAddress = new Uri("https://api.voyageai.com/v1/"),
     DefaultRequestHeaders = { Authorization = new AuthenticationHeaderValue("Bearer", apiKey) }

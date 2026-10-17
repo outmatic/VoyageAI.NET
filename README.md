@@ -2,7 +2,7 @@
 
 **Typed .NET client for the [Voyage AI](https://voyageai.com) API**
 
-Text embeddings, contextualized chunk embeddings, multimodal embeddings, and reranking. Source-generated JSON, auto-batching, and built-in resilience — zero configuration.
+Text embeddings, contextualized chunk embeddings, multimodal embeddings (text, images, and video), and reranking. Source-generated JSON, auto-batching, and built-in resilience.
 
 [![NuGet](https://img.shields.io/nuget/v/VoyageAI.NET?style=flat-square&color=004880)](https://www.nuget.org/packages/VoyageAI.NET)
 [![Downloads](https://img.shields.io/nuget/dt/VoyageAI.NET?style=flat-square&color=004880)](https://www.nuget.org/packages/VoyageAI.NET)
@@ -12,7 +12,7 @@ Text embeddings, contextualized chunk embeddings, multimodal embeddings, and rer
 
 ---
 
-Wraps the [Voyage AI REST API](https://docs.voyageai.com) end-to-end with a battle-tested HTTP stack: typed `HttpClient` via `IHttpClientFactory`, HTTP/2 with ALPN, automatic decompression, pooled connections with DNS refresh, source-generated JSON (AOT- and trim-safe), streaming batch operations via `IAsyncEnumerable`, and automatic retry / circuit breaker / timeout via `Microsoft.Extensions.Http.Resilience`.
+Wraps the [Voyage AI REST API](https://docs.voyageai.com) embedding and reranking endpoints with typed `HttpClient` via `IHttpClientFactory`, HTTP/2 with ALPN, automatic decompression, pooled connections with DNS refresh, source-generated JSON (AOT- and trim-safe), streaming batch operations via `IAsyncEnumerable`, and automatic retry / circuit breaker / timeout via `Microsoft.Extensions.Http.Resilience`.
 
 ```
 thousands of texts  ──>  EmbedBatchAsync  ──>  IAsyncEnumerable<EmbeddingResponse>
@@ -49,7 +49,7 @@ public class SearchService(IVoyageClient voyage)
 Without DI:
 
 ```csharp
-var http = new HttpClient
+using var http = new HttpClient
 {
     BaseAddress = new Uri("https://api.voyageai.com/v1/"),
     DefaultRequestHeaders = { Authorization = new AuthenticationHeaderValue("Bearer", apiKey) }
@@ -81,6 +81,12 @@ var r = await client.EmbedAsync(new EmbeddingRequest
 
 // r.Data[0].Embedding  → float[]
 // r.Usage.TotalTokens  → int
+
+// Code retrieval
+var code = await client.EmbedAsync(
+    "public async Task SaveAsync() { /* ... */ }",
+    VoyageModels.VoyageCode4,
+    InputType.Document);
 ```
 
 ## Batch Embeddings
@@ -154,17 +160,22 @@ var r = await client.EmbedMultimodalAsync(new MultimodalEmbeddingRequest
             [
                 new TextContentPart { Text = "A photo of a cat" },
                 new ImageUrlContentPart { ImageUrl = "https://example.com/cat.jpg" },
-                // or: new ImageBase64ContentPart { ImageBase64 = "..." }
+                new VideoUrlContentPart { VideoUrl = "https://example.com/cat.mp4" }
+                // Base64 alternatives: ImageBase64ContentPart / VideoBase64ContentPart
+                // with data URLs such as "data:video/mp4;base64,..."
             ]
         }
     ],
     Model = VoyageModels.VoyageMultimodal35,
-    InputType = InputType.Document
+    InputType = InputType.Document,
+    OutputDimension = 512,
+    OutputDtype = "float"
 });
 
 // r.Data[0].Embedding    → float[]
 // r.Usage.TextTokens     → int
 // r.Usage.ImagePixels    → int
+// r.Usage.VideoPixels    → long (0 if omitted)
 // r.Usage.TotalTokens    → int
 
 // Batch — same pattern as text
@@ -175,6 +186,8 @@ await foreach (var r in client.EmbedMultimodalBatchAsync(
 }
 ```
 
+Video inputs require `voyage-multimodal-3.5`. Use URL content parts throughout a request, or base64 content parts throughout a request; do not mix the two image/video representations.
+
 ## Reranking
 
 ```csharp
@@ -182,7 +195,7 @@ await foreach (var r in client.EmbedMultimodalBatchAsync(
 var r = await client.RerankAsync(
     "When is Apple's conference call scheduled?",
     documents,
-    VoyageModels.Rerank25,
+    VoyageModels.Rerank3,
     topK: 3);
 
 // Full control
@@ -195,7 +208,7 @@ var r = await client.RerankAsync(new RerankRequest
         "Apple's conference call is scheduled for Thursday, November 2, 2023...",
         "Shakespeare's works endure in literature..."
     ],
-    Model = VoyageModels.Rerank25,
+    Model = VoyageModels.Rerank3,
     TopK = 3,
     ReturnDocuments = true,
     Truncation = true
@@ -209,7 +222,7 @@ var r = await client.RerankAsync(new RerankRequest
 
 ## Models
 
-Use `VoyageModels.*` constants — no magic strings.
+Use `VoyageModels.*` constants — no magic strings. Model identifiers are also accepted as strings, so newly released API models can be used before a package update. The catalogue below follows the official [text embedding](https://docs.voyageai.com/docs/embeddings), [contextualized embedding](https://docs.voyageai.com/docs/contextualized-chunk-embeddings), [multimodal](https://docs.voyageai.com/docs/multimodal-embeddings), and [reranking](https://docs.voyageai.com/docs/reranker) documentation.
 
 ### Embedding
 
@@ -218,6 +231,7 @@ Use `VoyageModels.*` constants — no magic strings.
 | `VoyageModels.Voyage4Large` | `voyage-4-large` |
 | `VoyageModels.Voyage4` | `voyage-4` |
 | `VoyageModels.Voyage4Lite` | `voyage-4-lite` |
+| `VoyageModels.VoyageCode4` | `voyage-code-4` |
 | `VoyageModels.VoyageCode3` | `voyage-code-3` |
 | `VoyageModels.VoyageFinance2` | `voyage-finance-2` |
 | `VoyageModels.VoyageLaw2` | `voyage-law-2` |
@@ -240,8 +254,12 @@ Use `VoyageModels.*` constants — no magic strings.
 
 | Constant | API id |
 | --- | --- |
+| `VoyageModels.Rerank3` | `rerank-3` |
+| `VoyageModels.Rerank3Lite` | `rerank-3-lite` |
 | `VoyageModels.Rerank25` | `rerank-2.5` |
 | `VoyageModels.Rerank25Lite` | `rerank-2.5-lite` |
+
+Earlier model constants remain available for compatibility. Open-weight models such as `voyage-4-nano` run locally and are outside this HTTP client's scope.
 
 ## Error Handling
 

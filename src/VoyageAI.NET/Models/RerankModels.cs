@@ -18,7 +18,7 @@ public sealed record RerankRequest
     public required List<string> Documents { get; init; }
 
     /// <summary>
-    /// The reranking model to use (e.g. <see cref="VoyageModels.Rerank25"/>).
+    /// The reranking model to use (e.g. <see cref="VoyageModels.Rerank3"/>).
     /// </summary>
     public required string Model { get; init; }
 

@@ -121,6 +121,8 @@ public sealed class SerializationTests
             Model = VoyageModels.VoyageMultimodal35,
             InputType = InputType.Document,
             Truncation = true,
+            OutputDimension = 512,
+            OutputDtype = "int8",
             OutputEncoding = "base64"
         };
 
@@ -131,6 +133,8 @@ public sealed class SerializationTests
         Assert.Equal("voyage-multimodal-3.5", root.GetProperty("model").GetString());
         Assert.Equal("document", root.GetProperty("input_type").GetString());
         Assert.Equal("base64", root.GetProperty("output_encoding").GetString());
+        Assert.Equal(512, root.GetProperty("output_dimension").GetInt32());
+        Assert.Equal("int8", root.GetProperty("output_dtype").GetString());
 
         var inputs = root.GetProperty("inputs");
         Assert.Equal(1, inputs.GetArrayLength());
@@ -142,6 +146,35 @@ public sealed class SerializationTests
         Assert.Equal("image_base64", content[2].GetProperty("type").GetString());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MultimodalEmbeddingRequest_SerializesVideoParts(bool base64)
+    {
+        const string url = "https://example.com/video.mp4";
+        const string data = "data:video/mp4;base64,AAAA";
+        var request = new MultimodalEmbeddingRequest
+        {
+            Inputs = [new MultimodalInput
+            {
+                Content = [new TextContentPart { Text = "A video" }, base64
+                    ? new VideoBase64ContentPart { VideoBase64 = data }
+                    : new VideoUrlContentPart { VideoUrl = url }]
+            }],
+            Model = VoyageModels.VoyageMultimodal35
+        };
+
+        var json = JsonSerializer.Serialize(request, VoyageJsonContext.Default.MultimodalEmbeddingRequest);
+        using var document = JsonDocument.Parse(json);
+        var video = document.RootElement.GetProperty("inputs")[0].GetProperty("content")[1];
+        var type = base64 ? "video_base64" : "video_url";
+        Assert.Equal(type, video.GetProperty("type").GetString());
+        Assert.Equal(base64 ? data : url, video.GetProperty(type).GetString());
+        Assert.Equal(2, video.EnumerateObject().Count());
+        Assert.False(document.RootElement.TryGetProperty("output_dimension", out _));
+        Assert.False(document.RootElement.TryGetProperty("output_dtype", out _));
+    }
+
     [Fact]
     public void MultimodalEmbeddingResponse_Deserializes()
     {
@@ -150,7 +183,7 @@ public sealed class SerializationTests
             "object": "list",
             "data": [{ "object": "embedding", "embedding": [0.5], "index": 0 }],
             "model": "voyage-multimodal-3.5",
-            "usage": { "text_tokens": 3, "image_pixels": 500, "total_tokens": 10 }
+            "usage": { "text_tokens": 3, "image_pixels": 500, "video_pixels": 3000000000, "total_tokens": 10 }
         }
         """;
 
@@ -159,6 +192,7 @@ public sealed class SerializationTests
         Assert.Equal((string?)"voyage-multimodal-3.5", (string?)response.Model);
         Assert.Equal(3, response.Usage.TextTokens);
         Assert.Equal(500, response.Usage.ImagePixels);
+        Assert.Equal(3000000000L, response.Usage.VideoPixels);
         Assert.Equal(10, response.Usage.TotalTokens);
     }
 

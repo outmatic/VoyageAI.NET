@@ -49,7 +49,7 @@ public interface IVoyageClient
     IAsyncEnumerable<ContextualizedEmbeddingResponse> EmbedContextualizedBatchAsync(IEnumerable<IEnumerable<string>> inputs, string model, string? inputType = null, int batchSize = 128, int maxConcurrency = 8, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Creates embeddings for multimodal input(s) containing text and/or images.
+    /// Creates embeddings for multimodal inputs containing text, images, and/or videos.
     /// </summary>
     Task<MultimodalEmbeddingResponse> EmbedMultimodalAsync(MultimodalEmbeddingRequest request, CancellationToken cancellationToken = default);
 
