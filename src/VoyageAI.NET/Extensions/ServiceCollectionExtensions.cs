@@ -16,7 +16,16 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddVoyageClient(this IServiceCollection services, Action<VoyageClientOptions> configure)
     {
-        services.Configure(configure);
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        services.AddOptions<VoyageClientOptions>()
+            .Configure(configure)
+            .Validate(static options => !string.IsNullOrWhiteSpace(options.ApiKey), "A Voyage API key is required.")
+            .Validate(static options => options.BaseUrl is { IsAbsoluteUri: true } uri
+                && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+                && uri.Query.Length == 0 && uri.Fragment.Length == 0,
+                "The Voyage base URL must be an absolute HTTP(S) URL without a query or fragment.");
 
         services.AddHttpClient<IVoyageClient, VoyageClient>((sp, client) =>
         {
@@ -24,7 +33,7 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = NormalizeBaseUrl(options.BaseUrl);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ApiKey);
             client.DefaultRequestVersion = HttpVersion.Version20;
-            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+            client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
         })
         .ConfigurePrimaryHttpMessageHandler(static () => new SocketsHttpHandler
         {

@@ -6,10 +6,13 @@ public sealed partial class VoyageClient
 {
     /// <inheritdoc />
     public Task<MultimodalEmbeddingResponse> EmbedMultimodalAsync(MultimodalEmbeddingRequest request, CancellationToken cancellationToken = default)
-        => PostAsync("multimodalembeddings", request,
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return PostAsync("multimodalembeddings", request,
             VoyageJsonContext.Default.MultimodalEmbeddingRequest,
-            VoyageJsonContext.Default.MultimodalEmbeddingResponse,
+            VoyageJsonContext.ForEmbeddingDtype(request.OutputDtype).MultimodalEmbeddingResponse,
             cancellationToken);
+    }
 
     /// <inheritdoc />
     public IAsyncEnumerable<MultimodalEmbeddingResponse> EmbedMultimodalBatchAsync(

@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using VoyageAI.Models;
@@ -18,6 +17,7 @@ public sealed partial class VoyageClient : IVoyageClient
     /// </summary>
     public VoyageClient(HttpClient httpClient)
     {
+        ArgumentNullException.ThrowIfNull(httpClient);
         _httpClient = httpClient;
     }
 
@@ -28,14 +28,18 @@ public sealed partial class VoyageClient : IVoyageClient
         JsonTypeInfo<TResponse> responseInfo,
         CancellationToken cancellationToken)
     {
-        using var response = await _httpClient.PostAsJsonAsync(endpoint, request, requestInfo, cancellationToken);
+        ArgumentNullException.ThrowIfNull(request);
+
+        using var response = await _httpClient.PostAsJsonAsync(endpoint, request, requestInfo, cancellationToken)
+            .ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
         {
             VoyageApiError? error = null;
             try
             {
-                error = await response.Content.ReadFromJsonAsync(VoyageJsonContext.Default.VoyageApiError, cancellationToken);
+                error = await response.Content.ReadFromJsonAsync(VoyageJsonContext.Default.VoyageApiError, cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch (JsonException)
             {
@@ -44,26 +48,7 @@ public sealed partial class VoyageClient : IVoyageClient
             throw new VoyageApiException(response.StatusCode, error?.Detail);
         }
 
-        return (await response.Content.ReadFromJsonAsync(responseInfo, cancellationToken))!;
-    }
-
-    private static async IAsyncEnumerable<TResponse> BatchAsync<TItem, TResponse>(
-        IEnumerable<TItem> inputs,
-        int batchSize,
-        int maxConcurrency,
-        Func<TItem[], CancellationToken, Task<TResponse>> send,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
-    {
-        foreach (var window in inputs.Chunk(batchSize).Chunk(maxConcurrency))
-        {
-            var tasks = window.Select(batch => send(batch, cancellationToken)).ToList();
-
-            var results = await Task.WhenAll(tasks);
-
-            foreach (var result in results)
-            {
-                yield return result;
-            }
-        }
+        return await response.Content.ReadFromJsonAsync(responseInfo, cancellationToken).ConfigureAwait(false)
+            ?? throw new JsonException($"Voyage API returned a null response for '{endpoint}'.");
     }
 }

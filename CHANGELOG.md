@@ -4,7 +4,13 @@
 
 - New model constants: `VoyageModels.VoyageCode4`, `VoyageModels.Rerank3`, and `VoyageModels.Rerank3Lite`; earlier constants remain available
 - Multimodal video content via `VideoUrlContentPart` and `VideoBase64ContentPart`, video pixel usage, output dimensions, and output data types
+- Decode base64 embedding responses, including signed and unsigned quantized output, while retaining the public `float[]` API
+- Serialize string arrays and lazy string sequences without reflection
+- Send the flat document input shape required for contextualized auto-chunking and validate incompatible inputs
+- Stream batches in input order without waiting for an entire concurrency window; cancel outstanding requests on early exit or failure
+- Validate client configuration, enable HTTP/1.1 fallback, and reject null success responses
 - Update SourceLink to 10.0.111 to fix the vulnerable transitive `Microsoft.Build.Tasks.Git` dependency (CVE-2026-62900)
+- Add regression coverage for request payloads, encoding, batching, and configuration
 
 ## 1.1.0
 

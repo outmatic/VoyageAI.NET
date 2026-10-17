@@ -70,7 +70,7 @@ var r = await client.EmbedAsync(["hello", "world"], VoyageModels.Voyage4);
 // Full control
 var r = await client.EmbedAsync(new EmbeddingRequest
 {
-    Input = "hello world",                  // string or string[]
+    Input = "hello world",                  // string or IEnumerable<string>
     Model = VoyageModels.Voyage4,           // required
     InputType = InputType.Query,            // "query" or "document" (optional)
     OutputDimension = 512,                  // 256, 512, 1024, 2048 (optional)
@@ -89,9 +89,11 @@ var code = await client.EmbedAsync(
     InputType.Document);
 ```
 
+Base64 responses are decoded into `float[]` automatically. Quantized output types retain their integer or packed-byte values in the returned floats; the client does not dequantize or unpack them.
+
 ## Batch Embeddings
 
-Embed thousands of texts with automatic batching and concurrency control. Results stream via `IAsyncEnumerable` as each batch completes, preserving input order.
+Embed thousands of texts with automatic batching and concurrency control. Results stream via `IAsyncEnumerable` in input order. Each consumed result frees a slot for the next request, up to `maxConcurrency` requests at once. Breaking out of enumeration, cancellation, or a request failure cancels outstanding requests.
 
 ```csharp
 var all = new List<float[]>();
@@ -125,7 +127,7 @@ var r = await client.EmbedContextualizedAsync(
 // Full control — including server-side auto-chunking
 var r = await client.EmbedContextualizedAsync(new ContextualizedEmbeddingRequest
 {
-    Inputs = [["full document text"]],      // one string per document with auto-chunking
+    Inputs = [["full document text"]],      // one full document per inner list
     Model = VoyageModels.VoyageContext4,    // required
     InputType = InputType.Document,         // required for auto-chunking
     EnableAutoChunking = true,              // let the server chunk each document
@@ -146,6 +148,8 @@ await foreach (var r in client.EmbedContextualizedBatchAsync(
     // process
 }
 ```
+
+For auto-chunking, the client sends a flat list of document strings as required by the API. The public request keeps the same nested `Inputs` shape as pre-chunked requests. Each inner list must contain exactly one string, and `InputType` must be `Document`.
 
 ## Multimodal Embeddings
 
@@ -186,7 +190,7 @@ await foreach (var r in client.EmbedMultimodalBatchAsync(
 }
 ```
 
-Video inputs require `voyage-multimodal-3.5`. Use URL content parts throughout a request, or base64 content parts throughout a request; do not mix the two image/video representations.
+Video inputs require `voyage-multimodal-3.5`. Use URL content parts throughout a request, or base64 content parts throughout a request; do not mix the two image/video representations. Set `OutputEncoding = "base64"` to receive embeddings decoded automatically into `float[]`.
 
 ## Reranking
 
@@ -281,7 +285,7 @@ catch (VoyageApiException ex)
 
 `AddVoyageClient` configures a production-ready HTTP stack out of the box:
 
-- **HTTP/2** via ALPN (`HttpVersionPolicy.RequestVersionOrHigher`) with graceful HTTP/1.1 fallback
+- **HTTP/2** via ALPN (`HttpVersionPolicy.RequestVersionOrLower`) with graceful HTTP/1.1 fallback
 - **`SocketsHttpHandler`** with `PooledConnectionLifetime = 5min` and `PooledConnectionIdleTimeout = 2min` — refreshes DNS without killing in-flight requests
 - **`AutomaticDecompression = All`** (gzip, brotli, deflate)
 - **`EnableMultipleHttp2Connections`** to avoid HTTP/2 stream-concurrency limits under load
@@ -298,6 +302,8 @@ builder.Services.AddVoyageClient(options =>
 });
 ```
 
+Configuration is validated when the client is resolved: `ApiKey` must be nonblank, and `BaseUrl` must be an absolute HTTP(S) URL without a query or fragment. A missing trailing slash is added automatically.
+
 ## Supported Frameworks
 
 `net8.0` · `net9.0` · `net10.0`
@@ -306,11 +312,11 @@ builder.Services.AddVoyageClient(options =>
 
 ```
 src/VoyageAI.NET/
-  Client/           VoyageClient partials (core, Embeddings, Contextualized, Multimodal, Rerank)
+  Client/           VoyageClient partials (core, Batching, Embeddings, Contextualized, Multimodal, Rerank)
   Models/           Request/response records (immutable, `required init`)
   Extensions/       AddVoyageClient DI extension
   Constants/        VoyageModels, InputType
-  Infrastructure/   VoyageJsonContext (source-gen), VoyageApiException, options
+  Infrastructure/   VoyageJsonContext (source-gen), JSON converters, VoyageApiException, options
 ```
 
 ## Samples

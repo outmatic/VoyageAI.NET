@@ -8,8 +8,9 @@ namespace VoyageAI.Models;
 public sealed record EmbeddingRequest
 {
     /// <summary>
-    /// The input to embed — a single string or a list of strings.
+    /// The input to embed — a single string or an <see cref="IEnumerable{T}"/> of strings.
     /// </summary>
+    [JsonConverter(typeof(EmbeddingInputJsonConverter))]
     public required object Input { get; init; }
 
     /// <summary>
@@ -85,7 +86,8 @@ public sealed record EmbeddingData
     public required string Object { get; init; }
 
     /// <summary>
-    /// The embedding vector.
+    /// The embedding vector, decoded from numeric arrays or base64 responses.
+    /// Quantized values are represented as floats without dequantization or unpacking.
     /// </summary>
     public required float[] Embedding { get; init; }
 

@@ -9,6 +9,7 @@ VoyageAI.NET.sln
 ├── src/VoyageAI.NET/                    → Class library (net8.0;net9.0;net10.0)
 │   ├── Client/                          → VoyageClient partial class files
 │   │   ├── VoyageClient.cs              → Core (constructor, PostAsync)
+│   │   ├── VoyageClient.Batching.cs     → Shared ordered batching and cancellation
 │   │   ├── VoyageClient.Embeddings.cs   → EmbedAsync, EmbedBatchAsync
 │   │   ├── VoyageClient.Contextualized.cs → EmbedContextualizedAsync, EmbedContextualizedBatchAsync
 │   │   ├── VoyageClient.Multimodal.cs   → EmbedMultimodalAsync, EmbedMultimodalBatchAsync
@@ -65,7 +66,7 @@ dotnet test
 - **Models**: Immutable records in `Models/` folder with `required init` properties
 - **Embeddings**: `float[]` (not `double`) — standard for vector databases
 - **Async**: All public API methods are async with `CancellationToken` support
-- **Batching**: `IAsyncEnumerable` with double `Chunk()` for auto-batching + concurrency
+- **Batching**: `IAsyncEnumerable` with `Chunk()` and a bounded queue of tasks; preserve order and cancel outstanding requests when enumeration stops
 - **Errors**: API errors throw `VoyageApiException` with status code and detail
 - **Testing**: xUnit v3 — use `TestContext.Current.CancellationToken` in async tests
 - **Constants**: Use `VoyageModels.*` and `InputType.*` instead of magic strings

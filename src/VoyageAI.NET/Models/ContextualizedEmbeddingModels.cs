@@ -10,8 +10,8 @@ namespace VoyageAI.Models;
 public sealed record ContextualizedEmbeddingRequest
 {
     /// <summary>
-    /// The inputs to embed — one list of chunks per document (up to 1,000 inputs,
-    /// 120K total tokens, 16K total chunks).
+    /// The inputs to embed — one list of chunks per document (up to 1,000 inputs
+    /// and 16K total chunks). Token limits depend on the model and auto-chunking mode.
     /// </summary>
     public required List<List<string>> Inputs { get; init; }
 
@@ -47,7 +47,8 @@ public sealed record ContextualizedEmbeddingRequest
     /// <summary>
     /// Whether the server should chunk each document automatically. Requires
     /// <see cref="InputType"/> = <see cref="VoyageAI.InputType.Document"/> and exactly one
-    /// string per document in <see cref="Inputs"/>.
+    /// string per document in <see cref="Inputs"/>. The client sends these full documents
+    /// as a flat list of strings to the API.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? EnableAutoChunking { get; init; }
@@ -115,7 +116,8 @@ public sealed record ContextualizedEmbeddingDocument
 public sealed record ContextualizedChunkEmbedding
 {
     /// <summary>
-    /// The embedding vector.
+    /// The embedding vector, decoded from numeric arrays or base64 responses.
+    /// Quantized values are represented as floats without dequantization or unpacking.
     /// </summary>
     public required float[] Embedding { get; init; }
 

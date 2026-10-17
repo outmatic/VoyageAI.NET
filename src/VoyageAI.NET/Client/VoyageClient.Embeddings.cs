@@ -6,10 +6,13 @@ public sealed partial class VoyageClient
 {
     /// <inheritdoc />
     public Task<EmbeddingResponse> EmbedAsync(EmbeddingRequest request, CancellationToken cancellationToken = default)
-        => PostAsync("embeddings", request,
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return PostAsync("embeddings", request,
             VoyageJsonContext.Default.EmbeddingRequest,
-            VoyageJsonContext.Default.EmbeddingResponse,
+            VoyageJsonContext.ForEmbeddingDtype(request.OutputDtype).EmbeddingResponse,
             cancellationToken);
+    }
 
     /// <inheritdoc />
     public Task<EmbeddingResponse> EmbedAsync(string input, string model, string? inputType = null, CancellationToken cancellationToken = default)

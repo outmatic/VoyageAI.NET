@@ -428,7 +428,10 @@ internal sealed class MockHandler : HttpMessageHandler
     public HttpRequestMessage? LastRequest { get; private set; }
     public int CallCount { get; private set; }
     public List<HttpRequestMessage> Requests { get; } = new();
+    public List<string> RequestBodies { get; } = new();
     public int MaxConcurrent { get; private set; }
+
+    public Func<string, CancellationToken, Task<HttpResponseMessage>>? ResponseFactory { get; set; }
 
     /// <summary>Optional async hook run before producing the response. Useful for testing cancellation and concurrency.</summary>
     public Func<CancellationToken, Task>? BeforeResponse { get; set; }
@@ -449,10 +452,12 @@ internal sealed class MockHandler : HttpMessageHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+        var body = await request.Content!.ReadAsStringAsync(cancellationToken);
         lock (_lock)
         {
             LastRequest = request;
             Requests.Add(request);
+            RequestBodies.Add(body);
             CallCount++;
             _currentConcurrent++;
             if (_currentConcurrent > MaxConcurrent) MaxConcurrent = _currentConcurrent;
@@ -461,6 +466,9 @@ internal sealed class MockHandler : HttpMessageHandler
         {
             if (BeforeResponse is not null)
                 await BeforeResponse(cancellationToken);
+
+            if (ResponseFactory is not null)
+                return await ResponseFactory(body, cancellationToken);
 
             return new HttpResponseMessage(_statusCode)
             {

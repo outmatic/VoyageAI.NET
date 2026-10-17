@@ -24,7 +24,8 @@ public interface IVoyageClient
 
     /// <summary>
     /// Creates embeddings for a large number of inputs, automatically batching and parallelizing requests.
-    /// Results are streamed as each batch completes, preserving input order.
+    /// Results are streamed in input order with bounded concurrency. Outstanding requests
+    /// are canceled when enumeration stops, is canceled, or fails.
     /// </summary>
     IAsyncEnumerable<EmbeddingResponse> EmbedBatchAsync(IEnumerable<string> inputs, string model, string? inputType = null, int batchSize = 128, int maxConcurrency = 8, CancellationToken cancellationToken = default);
 
@@ -42,9 +43,9 @@ public interface IVoyageClient
 
     /// <summary>
     /// Creates contextualized chunk embeddings for a large number of documents, automatically
-    /// batching and parallelizing requests. Results are streamed as each batch completes,
-    /// preserving input order. Batching is per document; chunks of a document always stay
-    /// in the same request.
+    /// batching and parallelizing requests. Results are streamed in input order. Batching
+    /// is per document; chunks of a document always stay in the same request. Outstanding
+    /// requests are canceled when enumeration stops, is canceled, or fails.
     /// </summary>
     IAsyncEnumerable<ContextualizedEmbeddingResponse> EmbedContextualizedBatchAsync(IEnumerable<IEnumerable<string>> inputs, string model, string? inputType = null, int batchSize = 128, int maxConcurrency = 8, CancellationToken cancellationToken = default);
 
@@ -55,7 +56,8 @@ public interface IVoyageClient
 
     /// <summary>
     /// Creates multimodal embeddings for a large number of inputs, automatically batching and parallelizing requests.
-    /// Results are streamed as each batch completes, preserving input order.
+    /// Results are streamed in input order with bounded concurrency. Outstanding requests
+    /// are canceled when enumeration stops, is canceled, or fails.
     /// </summary>
     IAsyncEnumerable<MultimodalEmbeddingResponse> EmbedMultimodalBatchAsync(IEnumerable<MultimodalInput> inputs, string model, string? inputType = null, int batchSize = 128, int maxConcurrency = 8, CancellationToken cancellationToken = default);
 
